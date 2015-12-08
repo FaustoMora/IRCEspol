@@ -1,6 +1,6 @@
-#include "variables.h"
-#include "usuarios.h"
-#include "canales.h"
+//#include "variables.h"
+//#include "usuarios.h"
+//#include "canales.h"
 #include <pthread.h>
 #include <ctype.h>
 #include <stdio.h>
