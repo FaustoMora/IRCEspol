@@ -30,7 +30,7 @@ typedef struct
 {
 	int sock;
 	char hostname[MAX_TAM_HOSTNAME];
-} CLInfo;
+} InfoCliente;
 
 // funciones del ircs 
 extern char serv_hname[MAX_TAM_HOSTNAME+1];
