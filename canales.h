@@ -29,9 +29,7 @@ class Canal
     void getNombre(char * pun_nombre);
     int setTema(char * pun_tema);
     int getTema(char * pun_tema);
-    int getUsuarios(int users[], int tam);
     int getUsuario(int i);
-     
     int contarUsuarios();
     int perteneceCanal(int id);
     int anadirUsuario(int id);
