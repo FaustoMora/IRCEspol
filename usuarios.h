@@ -51,14 +51,12 @@ class Usuario
 		int numCanales();
 		Regstatus getEstado();
 		void setEstado(Regstatus rs);
-		int getCanales(int chns[], int tam);
-		int getCanales(int cid);
 		int getSock();
 		pthread_t getThreadId();
-		int join(char *chan);
-		int join(int cid);
-		int part(char *chan);
-		int part(int cid);
+		int unirse(char *chan);
+		int unirse(int cid);
+		int salirse(char *chan);
+		int salirse(int cid);
 		int isIn(int cid);
 		int buscarCanal(int cid);
 		int enviarMensaje(char *msg);	
