@@ -6,38 +6,33 @@ Archivo canales.cpp
 Grupo: Andres Sornoza, Fausto Mora, Wilson Enriquez
 Adaptacion Simplificada de Michalis Zervos - http://michal.is
 */
+
 #include "canales.h"
  
-/* Class Canal  */
+/* ----------------- Constructores ----------------------*/
  
-//////// Constructores
- 
+//Constructor
 Canal::Canal(char * pun_nombre){
     strcpy(this->nombre, pun_nombre);
     this->num_usuarios = 0;
     this->tema[0] = '\0';
 }
  
+//Destructor.
 Canal::~Canal(){
 }
  
-//////// GETTERS
- 
- 
-// funcion para obtener el numero de usuarios
-int Canal::contarUsuarios(){
-    return this->num_usuarios;
-}
- 
- 
-// funcion para obtener nombre del canal
+
+/* ----------------- Getters ----------------------*/
+
+// Funcion para obtener nombre del canal.
 void Canal::getNombre(char * pun_nombre){
     if (pun_nombre != NULL){
         strcpy(pun_nombre, this->nombre);
     }
 }
  
-// funcion para obtener tema del canal
+// Funcion para obtener tema del canal.
 int Canal::getTema(char * pun_tema){
     if (pun_tema == NULL){
         return -1;
@@ -47,7 +42,7 @@ int Canal::getTema(char * pun_tema){
 }
  
  
-// funcion para obtener un usuario del canal por posicion
+// Funcion para obtener un usuario del canal por posicion en la lista del canal.
 int Canal::getUsuario(int i){
     if (i < this->contarUsuarios()){
         return this->usuarios_canal[i];
@@ -55,28 +50,11 @@ int Canal::getUsuario(int i){
         return -1;
     }
 }
- 
-// obtener lista de usuarios del canal
-// si el longitud es menor enviamos valor de error
-// caso contrario recorremos los usuarios en el canal y copiamos
-//retornamos el valor de los usuarios del canal como success
-int Canal::getUsuarios(int rusuarios[], int tam){
- 
-    if (tam < this->contarUsuarios()){
-        return -1;
-    }
-    for (int i = 0; i < this->contarUsuarios(); i++){
-        rusuarios[i] = this->usuarios_canal[i];
-    }
-    return this->contarUsuarios();
-}
-         
- 
-/////////// SETTERS
- 
-// funcion para setear un tema
-// si tema es mayor al tamaño max se finaliza la cadena
-// se guarda en el canal
+
+/* ----------------- Setters ----------------------*/
+
+// Funcion para setear un tema, si tema es mayor al tamano maximo establecidoe finaliza la cadena, se guarda en el canal.
+
 int Canal::setTema(char * pun_tema){
     int tema_lim = FALSE;
  
@@ -91,11 +69,18 @@ int Canal::setTema(char * pun_tema){
     strcpy(this->tema, pun_tema);
  
     return tema_lim;
+
 }
- 
-//////////// FUNCIONES VARIAS de CANAL
- 
-// buscar usuario en canal por id
+
+
+/* ----------------- Funciones Auxiliares ----------------------*/
+
+// Funcion para obtener el numero de usuarios
+int Canal::contarUsuarios(){
+    return this->num_usuarios;
+} 
+
+// Buscar usuario en canal por id
 int Canal::buscarUsuario(int id){
     for (int i = 0; i < this->contarUsuarios(); i++){
         if ( this->usuarios_canal[i] == id ){
@@ -105,15 +90,13 @@ int Canal::buscarUsuario(int id){
     return -1;
 }
  
-// funcion booleana que devuelve si un usuario se encuentra en el canal
+// Funcion que devuelve 1(int) si un usuario se encuentra en el canal.
 int Canal::perteneceCanal(int id){
     return (this->buscarUsuario(id) >= 0);
 }
  
-// funcion para añadir un usuario al canal mediante id
-// si no hay espacio en canal, id invalido o si
-//usario no pertence a canal envia error
-//añade el id del usuario al canal y retorna un success
+// Funcion para añadir un usuario al canal mediante id.
+// Si no hay espacio en canal retorna -1, Si id es invalido retorna -2, Si ya pertenece al canal -3
 int Canal::anadirUsuario(int id){
     if (this->contarUsuarios() >= MAX_USUARIOS_X_CANAL){
         return -1;
@@ -129,15 +112,13 @@ int Canal::anadirUsuario(int id){
 }
  
  
-// funcion para anañadir un usuario al canal por nombre
+// Funcion para añadir un usuario al canal por nombre.
+// Utiliza la funcion getUsuarioxNombre de usuarios.cpp para obtener el id y volver a llamar a anadirUsuario(int)
 int Canal::anadirUsuario(char *nombre_usu){
     this->anadirUsuario(getUsuarioxNombre(nombre_usu));
 }
- 
- 
-// funcion para remover usuario del canal por id
-// preguntamos si el la posicion es menor a 0 o no hay usuario en el canal
-// buscamos usuario por id, al encontrarlo lo removemos de la cola
+
+//Funcion para remvoer usuario del canal por id.
 int Canal::removerUsuario(int id){
     int userpos;
  
@@ -160,12 +141,13 @@ int Canal::removerUsuario(int id){
 }
  
  
-// funcion para remvoer usuario del canal por nombre
+// Funcion para remvoer usuario del canal por nombre.
 int Canal::removerUsuario(char *nombre_usu){
     this->removerUsuario(getUsuarioxNombre(nombre_usu));
 }
  
-// funcion que permite enviar mensaje atravez del canal
+ 
+// Funcion que permite enviar mensaje por el canal.
 void Canal::enviarMensaje(int id, char * msg, int remitente){
     for (int i = 0; i < this->contarUsuarios(); i++){
         if ( this->usuarios_canal[i] != id || remitente ){
@@ -176,16 +158,15 @@ void Canal::enviarMensaje(int id, char * msg, int remitente){
  
  
  
-////// funciones extras para Canal //////////
+/* ----------------- Funciones Externas de la Clase ----------------------*/
  
-// funcion booleana retorna validez de un canal
+// Funcion que retorna 1(int) si un canal existe o es valido.
 int canalValido(int id){
     return (canales[id] != NULL);
 }
  
  
-// funcion que retorna el primer canal disponible
-// retorna la posicion del canal si success
+// Funcion que retorna la posicion del primer canal disponible.
 int obtenerCanalSinUsar(){
     for (int i = 0; i < MAX_NUM_CANALES; i++){
         if ( !canalValido(i)){
@@ -195,8 +176,7 @@ int obtenerCanalSinUsar(){
     return -1;
 }
  
-//funcion para obtener el canal por el nombre
-//retorna indice del canal en success
+// Funcion para obtener el canal por el nombre, retorna el indice en succes.
 int obtenerCanalxNombre(char * pun_nombre){
     char nombre_canal[MAX_TAM_CANAL+1];
     for (int i = 0; i < MAX_NUM_CANALES; i++){
@@ -210,7 +190,7 @@ int obtenerCanalxNombre(char * pun_nombre){
     return -1;
 }
  
-// funcion boleana para determinar si un canal existe
+// Funcion que retorna 1(int) para determinar si un canal existe con determinado nombre.
 int existeCanal(char * nombre_canal){
     return (obtenerCanalxNombre(nombre_canal) >= 0);
 }
