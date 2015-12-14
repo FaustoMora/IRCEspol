@@ -11,9 +11,9 @@ Adaptacion Simplificada de Michalis Zervos - http://michal.is
 
 /* Clase Usuario */
 
+/* ----------------- Constructores ----------------------*/
 
-
-
+//Constructor
 Usuario::Usuario(int sockdscr, char * nombre_host, pthread_t threadid){
 	if ( (buf =(char *) malloc(TAM_BUFFER)) < 0){
 		return;
@@ -31,12 +31,13 @@ Usuario::Usuario(int sockdscr, char * nombre_host, pthread_t threadid){
 
 }
 
-
+//Destructor
 Usuario::~Usuario(){
 	pthread_mutex_unlock(&this->lock);
 	pthread_mutex_destroy(&this->lock);
 	free(buf);
 }
+
 
 //Método Get para obtener el nickname del usuario.
 int Usuario::getNickname(char *nick){
@@ -66,7 +67,7 @@ int Usuario::setNombreUsuario(char *nombre_usu){
 	strcpy(this->nombre_usuario, nombre_usu);
 }
 
-
+//Método para obtener el Nombre real del usuario.
 int Usuario::getNombreReal(char *nombre_r){
 	if (nombre_r == NULL){
 		return -1;
@@ -106,27 +107,6 @@ void Usuario::setEstado(Regstatus rs){
 }
 
 
-int Usuario::getCanales(int chns[], int tam){
-
-	if (tam < this->numCanales()){
-		return -1;
-    }
-
-	for (int i = 0; i < tam; i++){
-		chns[i] = this->canales_usuario[i];
-    }
-
-	return this->numCanales();
-}
-
-
-int Usuario::getCanales(int i){
-	if (i < this->numCanales()){
-		return this->canales_usuario[i];
-    }else{
-		return -1;
-    }
-}
 //Retorna el numero del socket de la clase usuario
 int Usuario::getSock(){
 	return this->sock;
@@ -137,13 +117,13 @@ pthread_t Usuario::getThreadId(){
 	return this->tid;
 }
 
-
-int Usuario::join(char *chan){
-	return this->join(obtenerCanalxNombre(chan));
+//Funcion que añade a un usuario a un canal con el nombre del canal.
+int Usuario::unirse(char *chan){
+	return this->unirse(obtenerCanalxNombre(chan));
 }
 
-
-int Usuario::join(int id){
+//Funcion que añade a un usuario a un canal con el id del canal.
+int Usuario::unirse(int id){
 	if (id < 0){
 		return -1;
     }
@@ -158,13 +138,13 @@ int Usuario::join(int id){
 	canales[id]->anadirUsuario(this->nickname);
 }
 
-
-int Usuario::part(char *chan){
-	return this->part(obtenerCanalxNombre(chan));
+//Funcion que saca a un usuario de un canal con el nombre del canal.
+int Usuario::salirse(char *chan){
+	return this->salirse(obtenerCanalxNombre(chan));
 }
 
-
-int Usuario::part(int id){
+//Funcion que saca a un usuario de un canal con el id del canal.
+int Usuario::salirse(int id){
 	int canal_pos;
 
 	if (id < 0){
@@ -186,7 +166,7 @@ int Usuario::part(int id){
 
 }
 
-
+//Funcion que busca un canal en el arreglo del canal de usuario por el id y lo retorna.
 int Usuario::buscarCanal(int id){
 	for (int i = 0; i < this->numCanales(); i++){
 		if ( this->canales_usuario[i] == id ){
@@ -196,12 +176,12 @@ int Usuario::buscarCanal(int id){
 	return -1;
 }
 
-
+//Funcion que valida si un usuario esta en el canal.
 int Usuario::isIn(int id){
 	return (this->buscarCanal(id) >= 0);
 }
 
-
+//Funcion que envia (write) mensaje a traves del socket
 int Usuario::enviarMensaje(char * msg = NULL){
 	int b_wr;
 
@@ -225,7 +205,7 @@ int Usuario::enviarMensaje(char * msg = NULL){
 	
 }
 
-
+//Funcion que maneja la entrada de parametros.
 int Usuario::esperarEntrada(){
 	int lectura_incompleta = FALSE;
 	int i = 0, b_read;
@@ -242,7 +222,7 @@ int Usuario::esperarEntrada(){
 			this->buf[i] = '\0';
 			break;
 		}
-		//Chequea
+		//Si aplasta enter el usuario añade retorno y EOF.
 		if ( chr == '\r' ){
 			if ( read(this->sock, &chr, 1) > 0 ){
 				if (chr == '\n'){
@@ -256,7 +236,7 @@ int Usuario::esperarEntrada(){
 				return -1;
             }
 		}
-		//Guarda el caracter
+		//Guarda el caracter y actualiza buf.
 		this->buf[i++] = chr;
 
 	/*Se repite el loop hasta que CR-LF es leido o 
@@ -270,7 +250,7 @@ int Usuario::esperarEntrada(){
     }
 }
 
-
+//Parsea los parametros que hemos ingresado por el buffer.
 int Usuario::parsearEntrada(){
 	
 	int i = 0;
@@ -304,11 +284,12 @@ int Usuario::parsearEntrada(){
 	return i-1;
 }
 
-
+//Funcion que retorna si el usuario esta registrado.
 int Usuario::estaRegistrado(){
 	return (this->estado == REG);
 }
 
+//Funcion que toma los valores de las constantes de los errores definidos, construye y envia el error.
 void Usuario::enviarError(int err_num, char * par, char * msg){
 	char *parametros[4];
 	char cmd[20] = { '\0' };
@@ -325,23 +306,37 @@ void Usuario::enviarError(int err_num, char * par, char * msg){
 	parametros[3] = NULL;
 	sprintf(cmd,"%d\0", err_num);	
 
-	construirMensaje(NULL, NULL, serv_hname, cmd, parametros, buffer);
+	construirMensaje(NULL, NULL, nombre_servidor, cmd, parametros, buffer);
 
 	this->enviarMensaje(buffer);
 
 	
 }
 
-
+/*Funcion principal de manejo de parametros:
+INFO
+JOIN*
+NAMES
+NICK*
+PART*
+PRIVMSG
+QUIT*
+SETNAME
+TIME
+USER*
+USERS
+VERSION
+MOTD
+*/
 int Usuario::act(int num_parametros){
 	char *cmd = this->cmd_parametros[0];
 	char buffer[TAM_BUFFER];
 	char *prms[MAX_PARAMETROS];
 
 	if ( cmd == NULL ){
-        return -1;
-    }
-	
+		return -1;
+	}
+
 	if ( ! strcmp(cmd, "NICK") ){
 		if (num_parametros < 1 ){
 			this->enviarError( INGRESANICKNAME, "" ,"No has ingresado un nickname" );	
@@ -357,61 +352,63 @@ int Usuario::act(int num_parametros){
 			this->enviarError( NICKNAMEENUSO, this->cmd_parametros[1] , "Nickname ocupado" );
 			return -1;
 		}
-	
+
 		this->setNickname(this->cmd_parametros[1]);
-		
+
 		switch (this->getEstado()){
-			case REG:
-				break;
-			case NICK:
-				break;
-			case USER:
-				this->setEstado(REG);
-				this->enviarMotd();
-				break;
-			case NONE:
-				this->setEstado(NICK);
-				break;
-			default:
-				break;
+		case REG:
+			break;
+		case NICK:
+			break;
+		case USER:
+			this->setEstado(REG);
+			this->enviarMotd();
+			break;
+		case NONE:
+			this->setEstado(NICK);
+			break;
+		default:
+			break;
 		}
-		
+
 	}else if ( ! strcmp(cmd, "USER") ){
-        
+
 		if ( num_parametros < 4 ){
 			this->enviarError( FALTANPARAMETROS, cmd ,"Faltan parametros" );
 			return -1;
 		}
 
 		switch (this->getEstado()){
-			case REG: case USER:
-				this->enviarError( YAESTAREGISTRADO, "" ,"Ya se encuentra registrado" );
-				return -1;
-				break;
-			case NICK:
-				this->setEstado(REG);
-				this->enviarMotd();
-				break;
-			case NONE:
-				this->setEstado(USER);
-				break;
-			default:
-				break;
+		case REG: case USER:
+			this->enviarError( YAESTAREGISTRADO, "" ,"Ya se encuentra registrado" );
+			return -1;
+			break;
+		case NICK:
+			this->setEstado(REG);
+			this->enviarMotd();
+			break;
+		case NONE:
+			this->setEstado(USER);
+			break;
+		default:
+			break;
 		}
-		
+
 		this->setNombreUsuario(this->cmd_parametros[1]);
 		this->setNombreReal(this->cmd_parametros[4]);
 		
+	}else if ( ! strcmp(cmd, "VERSION") ){
+
 	}else{
-        
+
 		if ( !this->estaRegistrado() ){
 			this->enviarError( NOESTASREGISTRADO, "" , "No estas registrado" );
 			return -1;
 		}
-		
+
 		if ( ! strcmp(cmd, "QUIT") ){
 			return 1;
-            
+
 		}else if ( ! strcmp(cmd, "JOIN") ){
 			int cid; 
 
@@ -419,8 +416,8 @@ int Usuario::act(int num_parametros){
 				this->enviarError( FALTANPARAMETROS, cmd ,"Faltan parametros" );
 				return -1;
 			}
-			
-			
+
+
 			if ( ( cid = obtenerCanalxNombre(this->cmd_parametros[1]) ) < 0 ){
 				printf("Creando nuevo canal - %s\n", this->cmd_parametros[1]);
 				cid = obtenerCanalSinUsar();
@@ -431,21 +428,21 @@ int Usuario::act(int num_parametros){
 				canales[cid] = new Canal(this->cmd_parametros[1]);
 			}
 
-			if ( this->join(cid) < 0){
+			if ( this->unirse(cid) < 0){
 				return -1;
-            }
+			}
 
-			sprintf(buffer,":%s!%s@%s JOIN :%s\r\n", this->nickname, this->nombre_usuario, this->nombre_host, this->cmd_parametros[1]);
+			sprintf(buffer,":%s!%s@%s Unirse :%s\r\n", this->nickname, this->nombre_usuario, this->nombre_host, this->cmd_parametros[1]);
 			canales[cid]->enviarMensaje(getUsuarioxNombre(this->nickname), buffer, TRUE);
-			
+
 			char tema[MAX_TAM_TEMA+1];
 			canales[cid]->getTema(tema);
-			sprintf(buffer,":%s 332 %s %s :%s\r\n", serv_hname, this->nickname, this->cmd_parametros[1], tema);
+			sprintf(buffer,":%s 332 %s %s :%s\r\n", nombre_servidor, this->nickname, this->cmd_parametros[1], tema);
 			this->enviarMensaje(buffer);
-			
+
 			char tmp[MAX_TAM_NICKNAME];
-			
-			sprintf(buffer, ":%s 353 %s = %s :", serv_hname, this->nickname, this->cmd_parametros[1]);
+
+			sprintf(buffer, ":%s 353 %s = %s :", nombre_servidor, this->nickname, this->cmd_parametros[1]);
 			for ( int i = 0; i < canales[cid]->contarUsuarios(); i++){
 				usuarios[canales[cid]->getUsuario(i)]->getNickname(tmp);
 				strcat(buffer, tmp);
@@ -453,114 +450,65 @@ int Usuario::act(int num_parametros){
 			}
 			strcat(buffer,"\r\n");
 			this->enviarMensaje(buffer);
-			
-			sprintf(buffer, ":%s 366 %s %s :End of /NAMES list\r\n", serv_hname, this->nickname, this->cmd_parametros[1]);
+
+			sprintf(buffer, ":%s 366 %s %s :Fin de la lista de nombres.\r\n", nombre_servidor, this->nickname, this->cmd_parametros[1]);
 			this->enviarMensaje(buffer);
-			
+
 		}else if ( ! strcmp(cmd, "PART") ){
-            
+
 			int cid, num_usuarios;
-	
+
 			if ( num_parametros < 1 ){
 				this->enviarError( FALTANPARAMETROS, cmd ,"Faltan parametros" );
 				return -1;
 			}
-			
+
 			if ( ( cid = obtenerCanalxNombre(this->cmd_parametros[1]) ) < 0 ){
 				return -1;
-            }
-			
-			sprintf(buffer, ":%s!%s@%s PART %s\r\n", this->nickname, this->nombre_usuario, this->nombre_host, this->cmd_parametros[1]);
+			}
+
+			sprintf(buffer, ":%s!%s@%s SALIO %s\r\n", this->nickname, this->nombre_usuario, this->nombre_host, this->cmd_parametros[1]);
 			canales[cid]->enviarMensaje(getUsuarioxNombre(this->nickname), buffer, TRUE);
 
-			if ( (num_usuarios = this->part(cid)) < 0 ){
+			if ( (num_usuarios = this->salirse(cid)) < 0 ){
 				return -1;
-            }
+			}
 
 			if ( num_usuarios == 0 )	{
 				delete canales[cid];
 				canales[cid] = NULL;
 			}	
-		
-		}else if ( ! strcmp(cmd, "MODE") ){
 
-			if ( num_parametros < 1){
-				
-				this->enviarError( FALTANPARAMETROS, cmd ,"Faltan parametros" );
-				return -1;
-			}
-
-			if ( num_parametros == 1 ){
-                
-				sprintf(buffer, ":%s 324 %s %s +\r\n", serv_hname, this->nickname, this->cmd_parametros[1] );
-				this->enviarMensaje(buffer);
-                
-			}else if ( *(this->cmd_parametros[2]) == 'b' ){
-                
-				sprintf(buffer, ":%s 368 %s %s :Fin de la lista de baneados del canal\r\n", serv_hname, this->nickname, this->cmd_parametros[1]);
-				this->enviarMensaje(buffer);
-                
-			}else if ( ! strcmp(this->cmd_parametros[2], "+t") ){
-                
-				sprintf(buffer, ":%s 482 %s %s :Usted no es el operador del canal\r\n", serv_hname, this->nickname, this->cmd_parametros[1]);
-				this->enviarMensaje(buffer);
-                
-			}else{
-                
-				this->enviarError( ERR_CHANOPPRIVSNEEDED, this->cmd_parametros[1] ,"No eres es operador del canal");
-				return -1;
-			}
-
-		}
-		else if ( ! strcmp(cmd, "TOPIC") ){
-            
-			if ( num_parametros < 1 ){
-				this->enviarError( FALTANPARAMETROS, cmd ,"Faltan parametros" );
-				return -1;
-                
-			}else if ( num_parametros == 1 ){
-                
-				if ( ! existeCanal(this->cmd_parametros[1]) ){
-					this->enviarError( NOEXISTECANAL, this->cmd_parametros[1] ,"No existe canal" );
-					return -1;
-				}
-
-				//Obtiene el tópico y lo envía (primero chequea si existe el tópico)
-			}else if ( num_parametros == 2 ){
-				//Revisa si el usuario está en el canal y asigna el topico, manda ":nombre_host 332 nombre_usuario #channel :new topic"(or send ERR_NOTONCHANNEL)
-				//Si el último parámetro está vacío, elimina el tópico
-			}
-		}
-		else if ( ! strcmp(cmd, "NAMES") ){
+		}else if ( ! strcmp(cmd, "NAMES") ){
 
 			if ( num_parametros < 1 ){
 				this->enviarError( FALTANPARAMETROS, cmd ,"Faltan parametros" );
 				return -1;
 			}
-			
+
 			/* Revisa si el usuario está en el canal y envía ":nombre_host 353 nombre_usuario = #channel :user1 user2 user3" y
-			 ":nombre_host 366 nombre_usuario #channel :End of /NAMES list */
+			":nombre_host 366 nombre_usuario #channel :End of /NAMES list */
 
 			//Si el usuario no está en el canal, manda una lista vacía de usuarios.
 		}else if ( ! strcmp(cmd, "LIST") ){
-			
-            
+
+
 		}else if ( ! strcmp(cmd, "PRIVMSG") ){
-            
+
 			if ( num_parametros == 0 ){	
-                
+
 				this->enviarError( NOEXISTERECEPTOR, cmd ,"No existe receptor" );
 				return -1;
-                
+
 			}else if ( num_parametros == 1 ){	
-                
+
 				this->enviarError( INGRESEALGOPARAENVIAR, cmd ,"No hay nada para enviar" );
 				return -1;
 			}
-            
-            /*Al canal*/
+
+			/*Al canal*/
 			if ( *(this->cmd_parametros[1]) == '#' ){
-                
+
 				int r_cid = obtenerCanalxNombre(cmd_parametros[1]);
 				if (r_cid < 0){
 					this->enviarError( NOEXISTENICKNAME, cmd ,"No existe nick/canal" );
@@ -568,7 +516,7 @@ int Usuario::act(int num_parametros){
 				}
 
 				if ( ! this->isIn(r_cid) ){
-                    
+
 					this->enviarError( ERR_CANNOTSENDTOCHAN, cmd_parametros[1] ,"No se puede enviar al canal" );
 					return -1;
 				}
@@ -577,13 +525,13 @@ int Usuario::act(int num_parametros){
 				prms[2] = NULL;
 				construirMensaje(this->nickname, this->nombre_usuario, this->nombre_host, cmd, prms, buffer);
 				canales[r_cid]->enviarMensaje(getUsuarioxNombre(this->nickname), buffer, FALSE);
-                
-            /* Al usuario */    
+
+				/* Al usuario */    
 			}else{
-                
+
 				int r_uid = getUsuarioxNombre(cmd_parametros[1]);
 				if (r_uid < 0){
-                    
+
 					this->enviarError( NOEXISTENICKNAME, cmd ,"No existe nick/canal" );
 					return -1;
 				}
@@ -595,10 +543,17 @@ int Usuario::act(int num_parametros){
 
 
 			}
-		}else if ( ! strcmp(cmd, "NOTICE") ){
-			
-		}else if ( ! strcmp(cmd, "WHO") ){
-			
+
+		}else if ( ! strcmp(cmd, "SETNAME") ){
+
+		}else if ( ! strcmp(cmd, "INFO") ){
+
+		}else if ( ! strcmp(cmd, "MOTD") ){
+
+		}else if ( ! strcmp(cmd, "TIME") ){
+		
+		}else if ( ! strcmp(cmd, "USERS") ){
+
 		}else{
 			this->enviarError( COMANDODESCONOCIDO, cmd ,"Comando desconocido" );
 			return -1;
@@ -608,18 +563,19 @@ int Usuario::act(int num_parametros){
 	return 0;
 }
 
+//Funcion para enviar MOTD
 int Usuario::enviarMotd(){
 	char msg[TAM_BUFFER];
 	char *prms[3];
 	
 
-	sprintf(msg,":%s 375 %s :-%s Mensaje del Dia-\r\n", serv_hname, this->nickname, serv_hname );
+	sprintf(msg,":%s 375 %s :-%s Mensaje del Dia-\r\n", nombre_servidor, this->nickname, nombre_servidor );
 	this->enviarMensaje(msg);
 
-	sprintf(msg,":%s 372 %s :Bienvenido a nuestro IRC-server Espol\r\n", serv_hname, this->nickname);
+	sprintf(msg,":%s 372 %s :Bienvenido a nuestro IRC-server Espol\r\n", nombre_servidor, this->nickname);
 	this->enviarMensaje(msg);
 
-	sprintf(msg,":%s 376 %s :End of /MOTD command\r\n", serv_hname, this->nickname);
+	sprintf(msg,":%s 376 %s :Fin del comando MOTD\r\n", nombre_servidor, this->nickname);
 	this->enviarMensaje(msg);
 }
 
@@ -657,7 +613,7 @@ int getUsuarioSinUsar(){
 int nicknameOcupado(char * nombre_r){
 	return (getUsuarioxNombre(nombre_r) >= 0 );
 }
-//Retorna un booleano que determina si el nombre escogido es válido en el IRC
+//Retorna un entero que determina si el nombre escogido es válido en el IRC
 int nombreUsuarioValido(char * nombre_usu){
 	int i,k;
 	char valid_chrs[] = { '-', '[', ']', '\\', '\'', '^', '}', '{' };
@@ -714,5 +670,3 @@ void construirMensaje(char *nick, char *nombre_usu, char *nombre_h, char *cmd, c
 	strcat(buf, "\r\n");
 
 }
-
-
