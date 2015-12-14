@@ -18,24 +18,27 @@ Adaptacion Simplificada de Michalis Zervos - http://michal.is
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+//Libreria auxiliar para manejar de nombre de host.
 #include <netdb.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
+//Definimos una funcion macro, para la retroalimentacion de errores.
 #define perror2(s, e) fprintf(stderr, "%s: %s\n", s, strerror(e))
 
-// estrutuctura de dato para sostener el info del Cliente
+// Estrutuctura de datos para almacenar la info del Cliente.
 typedef struct
 {
 	int sock;
 	char hostname[MAX_TAM_HOSTNAME];
 } InfoCliente;
 
-// funciones del ircs 
-extern char serv_hname[MAX_TAM_HOSTNAME+1];
+// Variable externa del ircs. 
+extern char nombre_servidor[MAX_TAM_HOSTNAME+1];
 
-void * connHandler(void * client);
+// Funciones del ircs. 
+void * connHandler(void * cliente);
 int init_socket(int port, char * hname);
 void closeConnection(int uid, int sock);
 
