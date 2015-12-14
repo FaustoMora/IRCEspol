@@ -7,69 +7,61 @@ Grupo: Andres Sornoza, Fausto Mora, Wilson Enriquez
 Adaptacion Simplificada de Michalis Zervos - http://michal.is
 */
 
-//#include "variables.h"
-//#include "usuarios.h"
-//#include "canales.h"
-#include <pthread.h>
-#include <ctype.h>
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
 #include "ircs.h"
-#include <iostream>
-#include <unistd.h> 
-#include <stdlib.h> 
-#include <pthread.h>
-
-//Definimos la funcion macro, para la retroalimentacion de errores.
-#define perror2(s, e) fprintf(stderr, "%s: %s\n", s, strerror(e))
 
 Usuario *usuarios[MAX_NUM_USUARIOS] = { NULL };
 Canal *canales[MAX_NUM_CANALES] = {NULL};
-char serv_hname[MAX_TAM_HOSTNAME+1] = { '\0' };
+char nombre_servidor[MAX_TAM_HOSTNAME+1] = { '\0' };
 
 
-// funcion main
+// Main
 int main(int argc, char *argv[]){
     
 	int srv_sock, cl_sock, port;
-	struct sockaddr_in client;
+	struct sockaddr_in cliente;
+	//Estructura de datos de libreria netbd.h para manejar las conexiones de los clientes.
 	struct hostent *rem;
 	pthread_t tid;
 	socklen_t cl_len = sizeof (struct sockaddr_in);
 	int err;
-	InfoCliente client_data;
+	InfoCliente datos_cliente;
 	
+	//Si no ha ingresado ningun puerto, retroalimentamos el uso de los puertos.
 	if ( argc != 2 ){ 
-		printf("Usando: %s <port>\n", argv[0]); exit(1); 
+		printf("Uso: %s <port>\n", argv[0]); exit(1); 
 	}
 
+	//Transformamos a caracter el puerto ingresado.
 	port = atoi(argv[1]);
 
-	if ( (srv_sock = init_socket(port, serv_hname)) < 0 ){
+
+	//Inicializamos el socket si ha sido creado correctamente retroalimentamos, sino salimos.
+	if ( (srv_sock = init_socket(port, nombre_servidor)) < 0 ){
 		exit(1);
 	}
 	
-	
+	//Bucle infinito de escucha en el servidor.
 	while(1){
-		while ( (cl_sock = accept(srv_sock, (struct sockaddr *) &client, &cl_len) ) < 0 );
 
-		if ( ( rem = gethostbyaddr((char *) &client.sin_addr.s_addr, sizeof (client.sin_addr.s_addr), client.sin_family) ) == NULL ){ 
+		//Mientras no obtengamos ningun mensaje, seguimos esperando.
+		while ( (cl_sock = accept(srv_sock, (struct sockaddr *) &cliente, &cl_len) ) < 0 );
+
+		//Intentamos Obtener el nombre del host que se ha conectado, si obtenemos error disparamos macro de error y salimos.
+		if ( ( rem = gethostbyaddr((char *) &cliente.sin_addr.s_addr, sizeof (cliente.sin_addr.s_addr), cliente.sin_family) ) == NULL ){ 
 			perror("gethostbyaddr"); 
 			exit(1); 
 		}
 		
-		//Cliente conectado
-		printf("Accepted connection from: %s\n", rem->h_name);
+		//Si obtenemos el nombre del cliente conectado entonces retroalimentamos conexion exitosa del cliente.
+		printf("Conexion aceptada de: %s\n", rem->h_name);
 
-		client_data.sock = cl_sock;
-		strcpy(client_data.hostname, rem->h_name);
-		if ( ( err = pthread_create(&tid, NULL, connHandler, (void *) &client_data) ) ){ 
+		//Rellenamos la estructura de datos_cliente
+		datos_cliente.sock = cl_sock;
+		strcpy(datos_cliente.hostname, rem->h_name);
+
+
+		//Creamos el trhead para la conexion del cliente, si algo falla retroalimentamos error y salimos.
+		if ( ( err = pthread_create(&tid, NULL, connHandler, (void *) &datos_cliente) ) ){ 
 			perror2("phtread_create", err); 
 			exit(1); 
 		}
@@ -97,8 +89,9 @@ void cerrarConexion(int uid, int sock){
 	Funcion que maneja las conexiones, 
 	al cual se le pasa la informacion del cliente. 
 */
+
 void * connHandler(void * cl_info){
-	// variable User, buffer y structura de infoCliente
+	// Variable User, buffer y structura de infoCliente
 	int err, ret, num_params;
 	InfoCliente cl_d = *(InfoCliente *) cl_info;
 	int uid;
@@ -116,7 +109,7 @@ void * connHandler(void * cl_info){
 	//Obtenemos el primer usuario libre en el array de usuarios.
 	uid = getUsuarioSinUsar();
 
-	//Validamos que no este lleno el arreglo.
+	//Validamos que no este llena la lista.
 	if (uid < 0){
 
 		printf("El numero de usuarios conectados, se ha excedido.\n");
@@ -134,21 +127,23 @@ void * connHandler(void * cl_info){
 	// Loop principal para esperar el ingreso de parametros.
 	do
 	{
-		// se espera entrada de usuario, si da es error
+		// Se espera entrada de usuario, si algo sale mal cierra la conexion.
 		if ( user->esperarEntrada() < 0 ){
 			cerrarConexion(uid, cl_d.sock);
 		}
-		// si no recibe entrada continua	
+		// Si no recibe entrada continua esperando.	
 		if ( ( num_params = user->parsearEntrada() ) < 0 ){
 			continue;
 		}
 		
+		//Productor - Consumidor 
 		pthread_mutex_lock(&user->lock);
 		ret = user->act(num_params);	
 		pthread_mutex_unlock(&user->lock);
 			
-	}while(ret != 1);
+	}while(ret != 1); 
 
+	//Si QUIT sale del loop y cerramos la conexion.
 	cerrarConexion(uid, cl_d.sock);
 }
 
@@ -167,7 +162,7 @@ int init_socket(int port, char *hname){
 		return -1;
 	}
 	
-	// constantes predefinidas
+	// Constantes predefinidas
 	server.sin_family = PF_INET;
 	server.sin_addr.s_addr = htonl(INADDR_ANY);
 	server.sin_port = htons(port);
@@ -177,17 +172,19 @@ int init_socket(int port, char *hname){
 		perror("bind");
 		return -1;
 	}
-
+	printf("Servidor creado correctamente en el puerto: %d\n", port);
+		
 	// Escuchamos conexiones por este socket.
 	if (listen(sock, MAX_COLA_ESCUCHA) < 0){
 		perror("listen");
 		return -1;
 	}
+	printf("Empezamos a escuchar las conexiones.\n");
 	
-	gethostname(serv_hname, MAX_TAM_HOSTNAME);
-	struct hostent *s_hostent = gethostbyname(serv_hname);
+	//Funcion de manejo de hostnames.
+	gethostname(nombre_servidor, MAX_TAM_HOSTNAME);
+	struct hostent *s_hostent = gethostbyname(nombre_servidor);
 
 	return sock;
 }
-
 
