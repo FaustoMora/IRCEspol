@@ -169,7 +169,7 @@ int Canal::removerUsuario(char *nombre_usu){
 void Canal::enviarMensaje(int id, char * msg, int remitente){
     for (int i = 0; i < this->contarUsuarios(); i++){
         if ( this->usuarios_canal[i] != id || remitente ){
-            users[this->usuarios_canal[i]]->enviarMensaje(msg);
+            usuarios[this->usuarios_canal[i]]->enviarMensaje(msg);
         }
     }
 }
