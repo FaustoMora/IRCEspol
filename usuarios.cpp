@@ -499,7 +499,23 @@ int Usuario::act(int num_parametros){
 			char cnombre[MAX_TAM_CANAL+1];
 			char unombre[MAX_TAM_USERNAME+1];
 
+			// recorremos los canales para buscar cada uno de ellos
+			for ( int i = 0; i < MAX_NUM_CANALES; i++){
+				if( canales[i] != NULL ){
 
+					canales[i]->getNombre(cnombre);
+					strcat(buffer, cnombre);
+					strcat(buffer, " ");
+
+					for ( int j = 0; j < canales[i]->contarUsuarios(); j++){
+						usuarios[canales[i]->getUsuario(j)]->getNickname(unombre);
+						strcat(buffer, unombre);
+						strcat(buffer, ",");
+					}
+
+				strcat(buffer,"\r\n");
+				}
+			}
 
 			// para encontrar usuarios que no tienen canal
 			// recorremos usuarios
