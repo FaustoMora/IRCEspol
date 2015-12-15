@@ -498,49 +498,76 @@ int Usuario::act(int num_parametros){
 
 			char cnombre[MAX_TAM_CANAL+1];
 			char unombre[MAX_TAM_USERNAME+1];
+			// se verifica la entrada de los parametros
+			if( ! num_parametros < 1 ){
+				int cindex = obtenerCanalxNombre(this->cmd_parametros[1]);
 
-			// recorremos los canales para buscar cada uno de ellos
-			for ( int i = 0; i < MAX_NUM_CANALES; i++){
-				if( canales[i] != NULL ){
+				// se pregunta por el index del canal
+				if(cindex<0){
+					this->enviarError( NOEXISTECANAL, cmd ,"No existe canal" );
 
-					canales[i]->getNombre(cnombre);
-					strcat(buffer, cnombre);
+				}else{
+					// si canal existe se busca los usuarios dentro del canal
+					canales[cindex]->getNombre(cnombre);
+					printf("%s\n", cnombre);
+					strcat(buffer, this->cmd_parametros[1]);
 					strcat(buffer, " ");
 
-					for ( int j = 0; j < canales[i]->contarUsuarios(); j++){
-						usuarios[canales[i]->getUsuario(j)]->getNickname(unombre);
+					for ( int i = 0; i < canales[cindex]->contarUsuarios(); i++){
+						usuarios[canales[cindex]->getUsuario(i)]->getNickname(unombre);
 						strcat(buffer, unombre);
 						strcat(buffer, ",");
 					}
+					strcat(buffer,"\r\n");
+					this->enviarMensaje(buffer);
 
-				strcat(buffer,"\r\n");
 				}
-			}
+				
+			}else{
+				// recorremos los canales para buscar cada uno de ellos
+				for ( int i = 0; i < MAX_NUM_CANALES; i++){
+					if( canales[i] != NULL ){
 
-			// para encontrar usuarios que no tienen canal
-			// recorremos usuarios
-			int acum = 0;
-			strcat(buffer, "*");
-			strcat(buffer, " ");
-			for (int i = 0; i < MAX_NUM_USUARIOS; ++i){
-				if( usuarios[i] != NULL){
+						canales[i]->getNombre(cnombre);
+						strcat(buffer, cnombre);
+						strcat(buffer, " ");
 
-					for(int j=0; j < MAX_NUM_CANALES;j++ ){
-						if(usuarios[i]->isIn(j)){
-							acum++;
+						for ( int j = 0; j < canales[i]->contarUsuarios(); j++){
+							usuarios[canales[i]->getUsuario(j)]->getNickname(unombre);
+							strcat(buffer, unombre);
+							strcat(buffer, ",");
 						}
-					}
-					if(acum==0){
-						usuarios[i]->getNickname(unombre);
-						strcat(buffer, unombre);
-						strcat(buffer, ",");
-					}
-					acum=0;
 
+					strcat(buffer,"\r\n");
+					}
 				}
+
+				// para encontrar usuarios que no tienen canal
+				// recorremos usuarios
+				int acum = 0;
+				strcat(buffer, "*");
+				strcat(buffer, " ");
+				for (int i = 0; i < MAX_NUM_USUARIOS; ++i){
+					if( usuarios[i] != NULL){
+
+						for(int j=0; j < MAX_NUM_CANALES;j++ ){
+							if(usuarios[i]->isIn(j)){
+								acum++;
+							}
+						}
+						if(acum==0){
+							usuarios[i]->getNickname(unombre);
+							strcat(buffer, unombre);
+							strcat(buffer, ",");
+						}
+						acum=0;
+
+					}
+				}
+				strcat(buffer,"\r\n");
+				this->enviarMensaje(buffer);
 			}
-			strcat(buffer,"\r\n");
-			this->enviarMensaje(buffer);
+			
 
 
 		}else if ( ! strcmp(cmd, "LIST") ){
