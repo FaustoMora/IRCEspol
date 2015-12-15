@@ -585,7 +585,15 @@ int Usuario::act(int num_parametros){
 
 		}else if ( ! strcmp(cmd, "TIME") ){
 		
-
+		}else if ( ! strcmp(cmd, "USERS") ){
+			/* Comando que envia la lista de usuarios conectado a ese canal*/
+			char nom[MAX_TAM_NICKNAME+1];
+				for (int i = 0; i < MAX_NUM_USUARIOS; i++){
+					if(usuarios[i] != NULL){
+						usuarios[i]->getNombreUsuario(nom);
+						printf (" %d: %s \n",i+1,nom);
+					}
+				}
 
 		}else{
 			this->enviarError( COMANDODESCONOCIDO, cmd ,"Comando desconocido" );
