@@ -15,6 +15,7 @@ Adaptacion Simplificada de Michalis Zervos - http://michal.is
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <ctime>
 #include <unistd.h>
 #include <pthread.h>
 
