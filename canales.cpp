@@ -175,7 +175,7 @@ int obtenerCanalSinUsar(){
     }
     return -1;
 }
- 
+
 // Funcion para obtener el canal por el nombre, retorna el indice en succes.
 int obtenerCanalxNombre(char * pun_nombre){
     char nombre_canal[MAX_TAM_CANAL+1];
