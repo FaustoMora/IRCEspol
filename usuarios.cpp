@@ -313,6 +313,7 @@ void Usuario::enviarError(int err_num, char * par, char * msg){
 	
 }
 
+// Funcion que recibe un mensaje y lo imprime en la pantalla del cliente
 void Usuario::enviarInfo(char * par, char * msg){
 	char *parametros[4];
 	char cmd[20] = { '\0' };
@@ -559,7 +560,23 @@ int Usuario::act(int num_parametros){
 
 			}
 
-		
+		}else if ( ! strcmp(cmd, "SETNAME") ){
+			/* Comando que cambia el nombre real del usuario */
+			char aux[60];
+			// verificamos entrada de parametros
+			if ( num_parametros < 1 ){
+				this->enviarError( FALTANPARAMETROS, cmd ,"Faltan parametros" );
+				return -1;
+			}
+
+			// cambiamos nuevo nombre
+			this->setNombreReal(this->cmd_parametros[1]);
+
+			// presentamos mensaje
+			strcpy(aux,"-->");
+			strcat(aux,this->nombre_real);
+			this->enviarInfo( aux ,"Nombre real actualizado" );
+
 		}else if ( ! strcmp(cmd, "INFO") ){
 
 		}else if ( ! strcmp(cmd, "MOTD") ){
@@ -568,7 +585,7 @@ int Usuario::act(int num_parametros){
 
 		}else if ( ! strcmp(cmd, "TIME") ){
 		
-		
+
 
 		}else{
 			this->enviarError( COMANDODESCONOCIDO, cmd ,"Comando desconocido" );
