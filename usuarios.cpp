@@ -136,6 +136,7 @@ int Usuario::unirse(int id){
     
 	this->canales_usuario[this->num_canales++] = id;
 	canales[id]->anadirUsuario(this->nickname);
+	return 1;
 }
 
 //Funcion que saca a un usuario de un canal con el nombre del canal.
@@ -330,18 +331,10 @@ void Usuario::enviarInfo(char * par, char * msg){
 }
 
 /*Funcion principal de manejo de parametros:
-INFO
-JOIN*
-NAMES
-NICK*
-PART*
-PRIVMSG
-QUIT*
+
 SETNAME
-TIME
-USER*
+NAMES
 USERS
-VERSION
 MOTD
 */
 int Usuario::act(int num_parametros){
@@ -415,6 +408,17 @@ int Usuario::act(int num_parametros){
 		
 	}else if ( ! strcmp(cmd, "VERSION") ){
 
+		sprintf(buffer,"Version del Servidor IRC ESPOL --> 1.0\r\n");
+		this->enviarMensaje(buffer);
+
+	}else if ( ! strcmp(cmd, "TEST") ){
+			char buffer[1024] = {NULL};
+
+			for (int i = 0; i < this->numCanales(); i++)
+			{
+			   printf("%d\n", i);
+			}
+			this->enviarMensaje(buffer);
 	}else{
 
 		if ( !this->estaRegistrado() ){
@@ -433,32 +437,31 @@ int Usuario::act(int num_parametros){
 				return -1;
 			}
 
-
 			if ( ( cid = obtenerCanalxNombre(this->cmd_parametros[1]) ) < 0 ){
 				printf("Creando nuevo canal - %s\n", this->cmd_parametros[1]);
 				cid = obtenerCanalSinUsar();
+				
 				if (cid < 0){
 					printf("Sala del canal repleta\n");
 					return -1;
 				}
 				canales[cid] = new Canal(this->cmd_parametros[1]);
 			}
-
 			if ( this->unirse(cid) < 0){
 				return -1;
 			}
 
-			sprintf(buffer,":%s!%s@%s Unirse :%s\r\n", this->nickname, this->nombre_usuario, this->nombre_host, this->cmd_parametros[1]);
+			sprintf(buffer,":%s!%s@%s Se unio al canal :%s\r\n", this->nickname, this->nombre_usuario, this->nombre_host, this->cmd_parametros[1]);
 			canales[cid]->enviarMensaje(getUsuarioxNombre(this->nickname), buffer, TRUE);
 
 			char tema[MAX_TAM_TEMA+1];
 			canales[cid]->getTema(tema);
-			sprintf(buffer,":%s 332 %s %s :%s\r\n", nombre_servidor, this->nickname, this->cmd_parametros[1], tema);
+			sprintf(buffer,":%s 332 %s %s El tema del canal es:%s\r\n", nombre_servidor, this->nickname, this->cmd_parametros[1], tema);
 			this->enviarMensaje(buffer);
 
 			char tmp[MAX_TAM_NICKNAME];
 
-			sprintf(buffer, ":%s 353 %s = %s :", nombre_servidor, this->nickname, this->cmd_parametros[1]);
+			sprintf(buffer, ":%s 353 %s En el canal %s estan los siguientes usuarios:", nombre_servidor, this->nickname, this->cmd_parametros[1]);
 			for ( int i = 0; i < canales[cid]->contarUsuarios(); i++){
 				usuarios[canales[cid]->getUsuario(i)]->getNickname(tmp);
 				strcat(buffer, tmp);
@@ -467,7 +470,7 @@ int Usuario::act(int num_parametros){
 			strcat(buffer,"\r\n");
 			this->enviarMensaje(buffer);
 
-			sprintf(buffer, ":%s 366 %s %s :Fin de la lista de nombres.\r\n", nombre_servidor, this->nickname, this->cmd_parametros[1]);
+			sprintf(buffer, ":%s 366 %s Canal %s :Fin de la lista de nombres.\r\n", nombre_servidor, this->nickname, this->cmd_parametros[1]);
 			this->enviarMensaje(buffer);
 
 		}else if ( ! strcmp(cmd, "PART") ){
@@ -501,12 +504,21 @@ int Usuario::act(int num_parametros){
 				this->enviarError( FALTANPARAMETROS, cmd ,"Faltan parametros" );
 				return -1;
 			}
-
 			/* Revisa si el usuario está en el canal y envía ":nombre_host 353 nombre_usuario = #channel :user1 user2 user3" y
 			":nombre_host 366 nombre_usuario #channel :End of /NAMES list */
 
 			//Si el usuario no está en el canal, manda una lista vacía de usuarios.
 		}else if ( ! strcmp(cmd, "LIST") ){
+			char tmp[MAX_TAM_NICKNAME];
+			sprintf(buffer, " Lista de los canales disponibles en el servidor: " );
+			int tmpnum = obtenerCanalSinUsar();
+			for ( int i = 0; i < tmpnum; i++){
+				canales[i]->getNombre(tmp);
+				strcat(buffer, tmp);
+				strcat(buffer, " ");
+			}
+			strcat(buffer,"\r\n");
+			this->enviarMensaje(buffer);
 
 
 		}else if ( ! strcmp(cmd, "PRIVMSG") ){
@@ -527,7 +539,7 @@ int Usuario::act(int num_parametros){
 
 				int r_cid = obtenerCanalxNombre(cmd_parametros[1]);
 				if (r_cid < 0){
-					this->enviarError( NOEXISTENICKNAME, cmd ,"No existe nick/canal" );
+					this->enviarError( NOEXISTENICKNAME, cmd ,"No existe canal" );
 					return -1;
 				}
 
@@ -548,7 +560,7 @@ int Usuario::act(int num_parametros){
 				int r_uid = getUsuarioxNombre(cmd_parametros[1]);
 				if (r_uid < 0){
 
-					this->enviarError( NOEXISTENICKNAME, cmd ,"No existe nick/canal" );
+					this->enviarError( NOEXISTENICKNAME, cmd ,"No existe nick" );
 					return -1;
 				}
 				prms[0] = this->cmd_parametros[1];
@@ -556,7 +568,6 @@ int Usuario::act(int num_parametros){
 				prms[2] = NULL;
 				construirMensaje(this->nickname, this->nombre_usuario, this->nombre_host, cmd, prms, buffer);
 				usuarios[r_uid]->enviarMensaje(buffer);
-
 
 			}
 
@@ -579,11 +590,22 @@ int Usuario::act(int num_parametros){
 
 		}else if ( ! strcmp(cmd, "INFO") ){
 
+			sprintf(buffer,"Version del Servidor IRC ESPOL 1.0\nProyecto de Sistemas Operativos\nCreado el 16 de Diciembre del 2015\nWilson-Andres-Fausto.\nDesarrollado en C++\nLicencia GNU GPL\r\n");
+			this->enviarMensaje(buffer);
+
 		}else if ( ! strcmp(cmd, "MOTD") ){
 			/* Comando que envia el mensaje del dia */
 			this->enviarMotd();
 
 		}else if ( ! strcmp(cmd, "TIME") ){
+			
+			char timemsg[TAM_BUFFER];
+			time_t rawtime;
+			struct tm * timeinfo;
+			time (&rawtime);
+			timeinfo = localtime (&rawtime);
+			sprintf (timemsg,"LOCAL SERVER TIME (GMT): %s", asctime(timeinfo));
+			this->enviarMensaje(timemsg);
 		
 		}else if ( ! strcmp(cmd, "USERS") ){
 			/* Comando que envia la lista de usuarios conectado a ese canal*/
