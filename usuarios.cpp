@@ -407,14 +407,6 @@ int Usuario::act(int num_parametros){
 		sprintf(buffer,"Version del Servidor IRC ESPOL --> 1.0\r\n");
 		this->enviarMensaje(buffer);
 
-	}else if ( ! strcmp(cmd, "TEST") ){
-			char buffer[1024] = {NULL};
-
-			for (int i = 0; i < this->numCanales(); i++)
-			{
-			   printf("%d\n", i);
-			}
-			this->enviarMensaje(buffer);
 	}else{
 
 		if ( !this->estaRegistrado() ){
