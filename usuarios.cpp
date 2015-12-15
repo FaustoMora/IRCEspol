@@ -330,12 +330,8 @@ void Usuario::enviarInfo(char * par, char * msg){
 	this->enviarMensaje(buffer);
 }
 
-/*Funcion principal de manejo de parametros:
-
-SETNAME
-NAMES
-USERS
-MOTD
+/*Funcion principal de manejo de parametros
+de entrada del cliente
 */
 int Usuario::act(int num_parametros){
 	char *cmd = this->cmd_parametros[0];
@@ -500,14 +496,37 @@ int Usuario::act(int num_parametros){
 
 		}else if ( ! strcmp(cmd, "NAMES") ){
 
-			if ( num_parametros < 1 ){
-				this->enviarError( FALTANPARAMETROS, cmd ,"Faltan parametros" );
-				return -1;
-			}
-			/* Revisa si el usuario está en el canal y envía ":nombre_host 353 nombre_usuario = #channel :user1 user2 user3" y
-			":nombre_host 366 nombre_usuario #channel :End of /NAMES list */
+			char cnombre[MAX_TAM_CANAL+1];
+			char unombre[MAX_TAM_USERNAME+1];
 
-			//Si el usuario no está en el canal, manda una lista vacía de usuarios.
+
+
+			// para encontrar usuarios que no tienen canal
+			// recorremos usuarios
+			int acum = 0;
+			strcat(buffer, "*");
+			strcat(buffer, " ");
+			for (int i = 0; i < MAX_NUM_USUARIOS; ++i){
+				if( usuarios[i] != NULL){
+
+					for(int j=0; j < MAX_NUM_CANALES;j++ ){
+						if(usuarios[i]->isIn(j)){
+							acum++;
+						}
+					}
+					if(acum==0){
+						usuarios[i]->getNickname(unombre);
+						strcat(buffer, unombre);
+						strcat(buffer, ",");
+					}
+					acum=0;
+
+				}
+			}
+			strcat(buffer,"\r\n");
+			this->enviarMensaje(buffer);
+
+
 		}else if ( ! strcmp(cmd, "LIST") ){
 			char tmp[MAX_TAM_NICKNAME];
 			sprintf(buffer, " Lista de los canales disponibles en el servidor: " );
