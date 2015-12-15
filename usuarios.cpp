@@ -313,6 +313,21 @@ void Usuario::enviarError(int err_num, char * par, char * msg){
 	
 }
 
+void Usuario::enviarInfo(char * par, char * msg){
+	char *parametros[4];
+	char cmd[20] = { '\0' };
+	char buffer[TAM_BUFFER];
+
+	parametros[0] = this->nickname;
+	parametros[1] = par;
+	parametros[2] = msg;
+	parametros[3] = NULL;	
+
+	construirMensaje(NULL, NULL, nombre_servidor, cmd, parametros, buffer);
+
+	this->enviarMensaje(buffer);
+}
+
 /*Funcion principal de manejo de parametros:
 INFO
 JOIN*
@@ -544,15 +559,16 @@ int Usuario::act(int num_parametros){
 
 			}
 
-		}else if ( ! strcmp(cmd, "SETNAME") ){
-
+		
 		}else if ( ! strcmp(cmd, "INFO") ){
 
 		}else if ( ! strcmp(cmd, "MOTD") ){
+			/* Comando que envia el mensaje del dia */
+			this->enviarMotd();
 
 		}else if ( ! strcmp(cmd, "TIME") ){
 		
-		}else if ( ! strcmp(cmd, "USERS") ){
+		
 
 		}else{
 			this->enviarError( COMANDODESCONOCIDO, cmd ,"Comando desconocido" );

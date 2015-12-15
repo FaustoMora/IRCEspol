@@ -64,6 +64,7 @@ class Usuario
 		int parsearEntrada();
 		int estaRegistrado();
 		void enviarError(int err_num, char * par, char * msg);
+		void enviarInfo(char * par, char * msg);
 		int act(int num_params);
 		int enviarMotd();
 
