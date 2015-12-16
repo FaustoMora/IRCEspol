@@ -1,0 +1,85 @@
+.\"
+.\" MAN PAGE COMMENTS to
+.\"
+.\"	Chet Ramey
+.\"	Case Western Reserve University
+.\"	chet.ramey@case.edu
+.\"
+.\"	Last Change: Sun Feb  2 16:21:40 EST 2014
+.\"
+.\" bash_builtins, strip all but Built-Ins section
+.if \n(zZ=1 .ig zZ
+.if \n(zY=1 .ig zY
+.TH IRCEspol 1 "2014 February 2" "GNU Bash 4.3"
+.\"
+.\" There's some problem with having a `@'
+.\" in a tagged paragraph with the BSD man macros.
+.\" It has to do with `@' appearing in the }1 macro.
+.\" This is a problem on 4.3 BSD and Ultrix, but Sun
+.\" appears to have fixed it.
+.\" If you're seeing the characters
+.\" `@u-3p' appearing before the lines reading
+.\" `possible-hostname-completions
+.\" and `complete-hostname' down in READLINE,
+.\" then uncomment this redefinition.
+.\"
+.de }1
+.ds ]X \&\\*(]B\\
+.nr )E 0
+.if !"\\$1"" .nr )I \\$1n
+.}f
+.ll \\n(LLu
+.in \\n()Ru+\\n(INu+\\n()Iu
+.ti \\n(INu
+.ie !\\n()Iu+\\n()Ru-\w\\*(]Xu-3p \{\\*(]X
+.br\}
+.el \\*(]X\h|\\n()Iu+\\n()Ru\c
+.}f
+..
+.\"
+.\" File Name macro.  This used to be `.PN', for Path Name,
+.\" but Sun doesn't seem to like that very much.
+.\"
+.de FN
+\fI\|\\$1\|\fP
+..
+.SH NAME
+IRCEspol 
+.SH SYNOPSIS
+Programa desarrollado en C++ como proyecto del primer parcial de la materia Operativos. El proyecto consiste en la implementacion de un IRC (Internet Relay Chat) server. 
+.SH DESCRIPTION
+El programa permite la comunicacion de varios usuarios mediante telnet y permite la creacion de varios canales de chat, entre varios usuarios conectados. Para poder realizar un proyecto estable al usar threads, se implementaron funciones de sincronizacion.
+.SH OPTIONS
+Todos los comandos que se implementaron para el proyecto son:
+.TP
+.B INFO
+.TP
+.B JOIN
+.TP
+.B LIST
+.TP
+.B MOTD
+.TP
+.B NAMES
+.TP
+.B NICK
+.TP
+.B PART
+.TP
+.B PRIVMSG
+.TP
+.B QUIT
+.TP
+.B SETNAME
+.TP
+.B TIME
+.TP
+.B USER
+.TP
+.B USERS
+.TP
+.B VERSION
+.SH BUGS
+Se presenta un error cuando un usuario reliza una entrada que sobrepasa los maximos definidos(tamaño de nickname > 8, buffer > 200, nombre > 50, etc). Algunas partes del sistema no se encuentran validas y pueden saltar errores en las mencionadas fronteras.
+.SH AUTHOR
+Fausto Mora, Andres Sornoza, Wilson Enriquez
