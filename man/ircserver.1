@@ -1,0 +1,134 @@
+.\" Manpage for IRCEspol.
+.\" Proyecto Servidor IRC en C++ - Sistemas Operativos.
+.TH man 6 "16 Diciembre 2015" "1.0" "IRC MAN PAGE"
+
+.SH NOMBRE
+ircserver 
+
+.SH SINOPSIS
+ircserver [PUERTO]
+
+.SH DESCRIPCIóN
+Programa desarrollado en C++ como proyecto del primer parcial de la materia Sistemas Operativos. El proyecto consiste en la implementación de un IRC (Internet Relay Chat) server. 
+El programa permite la comunicación de varios usuarios manejados mediante hilos y permite la creación de varios canales de chat, entre muchos usuarios conectados, asi como algunas otras pocas funciones implementadas en el servidor.
+
+.SH OPCIONES
+Todos los comandos que se implementaron para el proyecto son:
+
+.TP
+.B INFO
+.IP
+INFO []
+.IP
+Devuelve información acerca del servidor. La información mostrada incluye: la version del servidor, cuando fue compilado,
+el patch actual, cuando fue lanzado y cualquier otra información que se considere relevante.
+
+.TP
+.B JOIN
+.IP
+JOIN [CHANNEL]
+.IP
+Permite a un usuario logueado conectarse al canal que se ha pasado como párametro. Si el canal no existe, se crea, si el canal esta lleno arroja una excepción.
+
+.TP
+.B LIST
+.IP
+LIST []
+.IP
+Enlista todos los canales en el servidor.
+
+.TP
+.B MOTD
+.IP
+MOTD []
+.IP
+Devuelve el mensaje del dia en el servidor.
+
+.TP
+.B NAMES
+.IP
+NAMES []
+.IP
+Devuelve todos los usuarios conectados en el servidor.
+
+
+.TP
+.B NICK
+.IP
+NICK [NICKNAME]
+.IP
+Permite a un usuario cambiar su IRC nickname, si el usuario no es valido devuelve el mensaje de error
+correspondiente o si el usuario ya ha sido usado de igual manera retroalimenta.
+
+.TP
+.B PART
+.IP
+PART [CHANNEL]
+.IP
+Permite a un usuario conectado en un canal, salir de ese canal. Si no se proporciona parametros o el 
+canal no existe, se devuelve un mensaje para avisarle al usuario. Una vez que un usuario ha salido del 
+canal se avisa por el canal que lo abandonó.
+
+
+.TP
+.B PRIVMSG
+.IP
+PRIVMSG [NICKNAME] [MENSAJE]
+.IP
+Envia un mensaje a el usuario con el nickname correspondiente al parámetro. Si no existe el usuario
+o el mensaje esta vacio el remitente es avisado.
+
+
+.TP
+.B QUIT
+.IP
+QUIT []
+.IP
+Comando para salir del servidor.
+
+
+.TP
+.B SETNAME
+.IP
+SETNAME [NOMBRENUEVO]
+.IP
+Permite cambiar al usuario su nombre real, mientras este en la conexión activa.
+
+
+.TP
+.B TIME
+.IP
+TIME []
+.IP
+Devuelve el tiempo actual del servidor.
+
+.TP
+.B USER
+.IP
+USER [USUARIO] [HOSTNAME] [USERMODE] [NOMBREREAL]
+.IP
+Este comando se usa al principio de una conexión para especificar el username, 
+el hostname, el nombre real y el user mode del cliente que se esta conectando. 
+Si no ingresa los parametros completos un mensaje de alerta se mostrará.
+
+.TP
+.B USERS
+.IP
+USERS []
+.IP
+Devuelve una lista de los usuarios en el servidor.
+
+
+.TP
+.B VERSION
+.IP
+VERSION []
+.IP
+Devuelve la versión del servidor.
+
+
+.SH ERRORES
+Se presenta un error cuando un usuario reliza una entrada que sobrepasa los maximos definidos(tamaño de nickname > 8, buffer > 200, nombre > 50, etc). Algunas partes del sistema no se encuentran validas y pueden saltar errores en las mencionadas fronteras.
+
+.SH AUTORES
+Fausto Mora, Andres Sornoza, Wilson Enriquez.
