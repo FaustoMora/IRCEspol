@@ -337,6 +337,7 @@ int Usuario::act(int num_parametros){
 	char *cmd = this->cmd_parametros[0];
 	char buffer[TAM_BUFFER];
 	char *prms[MAX_PARAMETROS];
+	int  unido;
 
 	if ( cmd == NULL ){
 		return -1;
@@ -407,6 +408,20 @@ int Usuario::act(int num_parametros){
 		sprintf(buffer,"Version del Servidor IRC ESPOL --> 1.0\r\n");
 		this->enviarMensaje(buffer);
 
+	}else if ( ! strcmp(cmd, "INFO") ){
+
+			sprintf(buffer,"Version del Servidor IRC ESPOL 1.0\nProyecto de Sistemas Operativos\nCreado el 16 de Diciembre del 2015\nWilson-Andres-Fausto.\nDesarrollado en C++\nLicencia GNU GPL\r\n");
+			this->enviarMensaje(buffer);
+
+	}else if ( ! strcmp(cmd, "TIME") ){
+			
+			char timemsg[TAM_BUFFER];
+			time_t rawtime;
+			struct tm * timeinfo;
+			time (&rawtime);
+			timeinfo = localtime (&rawtime);
+			sprintf (timemsg,"LOCAL SERVER TIME (GMT): %s", asctime(timeinfo));
+			this->enviarMensaje(timemsg);
 	}else{
 
 		if ( !this->estaRegistrado() ){
@@ -441,11 +456,6 @@ int Usuario::act(int num_parametros){
 
 			sprintf(buffer,":%s!%s@%s Se unio al canal :%s\r\n", this->nickname, this->nombre_usuario, this->nombre_host, this->cmd_parametros[1]);
 			canales[cid]->enviarMensaje(getUsuarioxNombre(this->nickname), buffer, TRUE);
-
-			char tema[MAX_TAM_TEMA+1];
-			canales[cid]->getTema(tema);
-			sprintf(buffer,":%s 332 %s %s El tema del canal es:%s\r\n", nombre_servidor, this->nickname, this->cmd_parametros[1], tema);
-			this->enviarMensaje(buffer);
 
 			char tmp[MAX_TAM_NICKNAME];
 
@@ -486,6 +496,25 @@ int Usuario::act(int num_parametros){
 				canales[cid] = NULL;
 			}	
 
+		}else if ( ! strcmp(cmd, "#") ){
+
+			int r_cid = obtenerCanalxNombre(cmd_parametros[1]);
+			if (r_cid < 0){
+				this->enviarError( NOEXISTENICKNAME, cmd ,"No existe el canal al que intentas enviar" );
+				return -1;
+			}
+
+			if ( ! this->isIn(r_cid) ){
+
+				this->enviarError( ERR_CANNOTSENDTOCHAN, cmd_parametros[1] ,"No te encuentras en el canal que quieres enviar el mensaje.");
+				return -1;
+			}
+			prms[0] = this->cmd_parametros[1];
+			prms[1] = this->cmd_parametros[2];
+			prms[2] = NULL;
+			construirMensaje(this->nickname, this->nombre_usuario, this->nombre_host, cmd, prms, buffer);
+			canales[r_cid]->enviarMensaje(getUsuarioxNombre(this->nickname), buffer, FALSE);
+
 		}else if ( ! strcmp(cmd, "NAMES") ){
 
 			char cnombre[MAX_TAM_CANAL+1];
@@ -513,8 +542,7 @@ int Usuario::act(int num_parametros){
 					strcat(buffer,"\r\n");
 					this->enviarMensaje(buffer);
 
-				}
-				
+				}	
 			}else{
 				// recorremos los canales para buscar cada uno de ellos
 				for ( int i = 0; i < MAX_NUM_CANALES; i++){
@@ -588,42 +616,17 @@ int Usuario::act(int num_parametros){
 				return -1;
 			}
 
-			/*Al canal*/
-			if ( *(this->cmd_parametros[1]) == '#' ){
+			int r_uid = getUsuarioxNombre(cmd_parametros[1]);
+			if (r_uid < 0){
 
-				int r_cid = obtenerCanalxNombre(cmd_parametros[1]);
-				if (r_cid < 0){
-					this->enviarError( NOEXISTENICKNAME, cmd ,"No existe canal" );
-					return -1;
-				}
-
-				if ( ! this->isIn(r_cid) ){
-
-					this->enviarError( ERR_CANNOTSENDTOCHAN, cmd_parametros[1] ,"No se puede enviar al canal" );
-					return -1;
-				}
-				prms[0] = this->cmd_parametros[1];
-				prms[1] = this->cmd_parametros[2];
-				prms[2] = NULL;
-				construirMensaje(this->nickname, this->nombre_usuario, this->nombre_host, cmd, prms, buffer);
-				canales[r_cid]->enviarMensaje(getUsuarioxNombre(this->nickname), buffer, FALSE);
-
-				/* Al usuario */    
-			}else{
-
-				int r_uid = getUsuarioxNombre(cmd_parametros[1]);
-				if (r_uid < 0){
-
-					this->enviarError( NOEXISTENICKNAME, cmd ,"No existe nick" );
-					return -1;
-				}
-				prms[0] = this->cmd_parametros[1];
-				prms[1] = this->cmd_parametros[2];
-				prms[2] = NULL;
-				construirMensaje(this->nickname, this->nombre_usuario, this->nombre_host, cmd, prms, buffer);
-				usuarios[r_uid]->enviarMensaje(buffer);
-
+				this->enviarError( NOEXISTENICKNAME, cmd ,"No existe nick" );
+				return -1;
 			}
+			prms[0] = this->cmd_parametros[1];
+			prms[1] = this->cmd_parametros[2];
+			prms[2] = NULL;
+			construirMensaje(this->nickname, this->nombre_usuario, this->nombre_host, cmd, prms, buffer);
+			usuarios[r_uid]->enviarMensaje(buffer);
 
 		}else if ( ! strcmp(cmd, "SETNAME") ){
 			/* Comando que cambia el nombre real del usuario */
@@ -642,25 +645,6 @@ int Usuario::act(int num_parametros){
 			strcat(aux,this->nombre_real);
 			this->enviarInfo( aux ,"Nombre real actualizado" );
 
-		}else if ( ! strcmp(cmd, "INFO") ){
-
-			sprintf(buffer,"Version del Servidor IRC ESPOL 1.0\nProyecto de Sistemas Operativos\nCreado el 16 de Diciembre del 2015\nWilson-Andres-Fausto.\nDesarrollado en C++\nLicencia GNU GPL\r\n");
-			this->enviarMensaje(buffer);
-
-		}else if ( ! strcmp(cmd, "MOTD") ){
-			/* Comando que envia el mensaje del dia */
-			this->enviarMotd();
-
-		}else if ( ! strcmp(cmd, "TIME") ){
-			
-			char timemsg[TAM_BUFFER];
-			time_t rawtime;
-			struct tm * timeinfo;
-			time (&rawtime);
-			timeinfo = localtime (&rawtime);
-			sprintf (timemsg,"LOCAL SERVER TIME (GMT): %s", asctime(timeinfo));
-			this->enviarMensaje(timemsg);
-		
 		}else if ( ! strcmp(cmd, "USERS") ){
 			/* Comando que envia la lista de usuarios conectado a ese canal*/
 			char nom[MAX_TAM_NICKNAME+1];
@@ -670,6 +654,10 @@ int Usuario::act(int num_parametros){
 						printf (" %d: %s \n",i+1,nom);
 					}
 				}
+
+		}else if ( ! strcmp(cmd, "MOTD") ){
+			/* Comando que envia el mensaje del dia */
+			this->enviarMotd();
 
 		}else{
 			this->enviarError( COMANDODESCONOCIDO, cmd ,"Comando desconocido" );
