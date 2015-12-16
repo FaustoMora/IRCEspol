@@ -28,7 +28,7 @@ int main(int argc, char *argv[]){
 	
 	//Si no ha ingresado ningun puerto, retroalimentamos el uso de los puertos.
 	if ( argc != 2 ){ 
-		printf("Uso: %s <port>\n", argv[0]); exit(1); 
+		printf("Uso Correcto: %s <puerto>\n", argv[0]); exit(1); 
 	}
 
 	//Transformamos a caracter el puerto ingresado.
@@ -122,7 +122,7 @@ void * connHandler(void * cl_info){
 	user = usuarios[uid];
 
 	//Retroalimentacion del lado del servidor, acerca del nuevo usuario creado.
-	printf("Usuario: %s conectado en el socket: %d, ha sido creado correctamente.\n", cl_d.hostname, cl_d.sock);
+	printf("Usuario: %s con ID: %d, ha sido creado correctamente.\n", cl_d.hostname, uid);
 
 	// Loop principal para esperar el ingreso de parametros.
 	do
