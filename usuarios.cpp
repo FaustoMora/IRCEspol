@@ -648,12 +648,15 @@ int Usuario::act(int num_parametros){
 		}else if ( ! strcmp(cmd, "USERS") ){
 			/* Comando que envia la lista de usuarios conectado a ese canal*/
 			char nom[MAX_TAM_NICKNAME+1];
+			sprintf(buffer, " Lista de los usuarios disponibles en el servidor: " );
 				for (int i = 0; i < MAX_NUM_USUARIOS; i++){
 					if(usuarios[i] != NULL){
 						usuarios[i]->getNombreUsuario(nom);
-						printf (" %d: %s \n",i+1,nom);
+						strcat(buffer, nom);
+						strcat(buffer, " ");
 					}
 				}
+				this->enviarMensaje(buffer);
 
 		}else if ( ! strcmp(cmd, "MOTD") ){
 			/* Comando que envia el mensaje del dia */
