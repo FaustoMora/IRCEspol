@@ -647,13 +647,19 @@ int Usuario::act(int num_parametros){
 
 		}else if ( ! strcmp(cmd, "USERS") ){
 			/* Comando que envia la lista de usuarios conectado a ese canal*/
-			char nom[MAX_TAM_NICKNAME+1];
-			sprintf(buffer, " Lista de los usuarios disponibles en el servidor: " );
+			char nom[MAX_TAM_USERNAME+1];
+			char nick[MAX_TAM_NICKNAME+1];
+			sprintf(buffer, " Lista de los usuarios disponibles en el servidor: \r\n" );
 				for (int i = 0; i < MAX_NUM_USUARIOS; i++){
 					if(usuarios[i] != NULL){
 						usuarios[i]->getNombreUsuario(nom);
+						usuarios[i]->getNickname(nick);
+						strcat(buffer, ".Nombre: ");
 						strcat(buffer, nom);
-						strcat(buffer, " ");
+						strcat(buffer,"\t");
+						strcat(buffer, "Nickname: ");
+						strcat(buffer, nick);
+						strcat(buffer,"\r\n");
 					}
 				}
 				this->enviarMensaje(buffer);
