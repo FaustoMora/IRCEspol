@@ -34,7 +34,7 @@ Adaptacion Simplificada de Michalis Zervos - http://michal.is
 #define MAX_TAM_TEMA 200
 #define MAX_PARAMETROS 20
 #define MAX_COLA_ESCUCHA 5
-#define TAM_BUFFER 512
+#define TAM_BUFFER 1024
 
 
 //Constantes de errores.
